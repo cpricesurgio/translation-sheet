@@ -1,5 +1,5 @@
 related
-# Laravel Translation Sheet
+# Laravel Translation Sheet (with alt file format)
 
 Translating Laravel languages files using a Google Spreadsheet.
 
