@@ -2,13 +2,13 @@
 
 namespace Nikaia\TranslationSheet\Translation;
 
-use Illuminate\Support\Arr;
-use Nikaia\TranslationSheet\Util;
-use Illuminate\Support\Collection;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
-use Nikaia\TranslationSheet\Spreadsheet;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Nikaia\TranslationSheet\Commands\Output;
+use Nikaia\TranslationSheet\Spreadsheet;
+use Nikaia\TranslationSheet\Util;
 
 class Writer
 {
@@ -48,7 +48,7 @@ class Writer
             ->groupTranslationsByFile()
             ->map(function ($items, $sourceFile) {
                 $this->writeFile(
-                    $this->app->make('path.lang').'/'.$sourceFile,
+                    $this->app->make('path.lang') . '/' . $sourceFile,
                     $items
                 );
             });
@@ -56,15 +56,65 @@ class Writer
 
     protected function writeFile($file, $items)
     {
-        $this->output->writeln('  '.$file);
+        $this->output->writeln('  ' . $file);
 
-        $content = "<?php\n\nreturn ".Util::varExport($items).";\n";
+        $content = "<?php\n\nreturn " . Util::varExport($items) . ";\n";
 
-        if (! $this->files->isDirectory($dir = dirname($file))) {
+        if (!$this->files->isDirectory($dir = dirname($file))) {
             $this->files->makeDirectory($dir, 0755, true);
         }
 
         $this->files->put($file, $content);
+    }
+
+    protected function groupTranslationCollectionFilter($collection)
+    {
+        $collection_result = new Collection();
+
+        foreach ($collection as $language_file => $entries) {
+
+            $new_language_file = [];
+
+            foreach ($entries as $entry_key => $entry) {
+
+                if (is_array($entry)) {
+                    /* level 1 */
+                    foreach ($entry as $entry_d1_k => $entry_d1_v) {
+
+                        if (is_array($entry_d1_v)) {
+                            /* level 2 */
+                            foreach ($entry_d1_v as $entry_d2_k => $entry_d2_v) {
+                                if (is_array($entry_d2_v)) {
+                                    /* level 3 */
+                                    foreach ($entry_d2_v as $entry_d3_k => $entry_d3_v) {
+
+                                        if (is_array($entry_d3_v)) { } else {
+
+                                            $new_language_file[$entry_key . "." . $entry_d1_k . "." . $entry_d2_k . "." . $entry_d3_k] = $entry_d3_v;
+                                        }
+                                    }
+                                    /* end level 3 */
+                                } else {
+
+                                    $new_language_file[$entry_key . "." . $entry_d1_k . "." . $entry_d2_k] = $entry_d2_v;
+                                }
+                            }
+
+                            /* end level 2 */
+                        } else {
+
+                            $new_language_file[$entry_key . "." . $entry_d1_k] = $entry_d1_v;
+                        }
+                    }
+                    /* end level 1 */
+                } else {
+                    $new_language_file[$entry_key] = $entry;
+                }
+            }
+            $collection_result[$language_file] = $new_language_file;
+        }
+        // \Log::info($collection_result->toJson());
+        return $collection_result;
     }
 
     protected function groupTranslationsByFile()
@@ -79,10 +129,12 @@ class Writer
         // flatten does not seem to work for every case. !!! refactor !!!
         $result = [];
         foreach ($items as $subitems) {
+
             $result = array_merge($result, $subitems);
         }
+        $collection_result = new Collection($result);
 
-        return new Collection($result);
+        return Writer::groupTranslationCollectionFilter($collection_result);
     }
 
     protected function buildTranslationsForFile($fileTranslations)
@@ -101,7 +153,7 @@ class Writer
                     continue;
                 }
 
-                $localeFile = str_replace('{locale}/', $locale.'/', $translation['sourceFile']);
+                $localeFile = str_replace('{locale}/', $locale . '/', $translation['sourceFile']);
                 if (empty($files[$localeFile])) {
                     $files[$localeFile] = [];
                 }

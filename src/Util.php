@@ -10,17 +10,17 @@ class Util
     {
         switch (gettype($var)) {
             case 'string':
-                return '"'.addcslashes($var, "\\\$\"\r\n\t\v\f").'"';
+                return '"' . addcslashes($var, "\\\$\"\r\n\t\v\f") . '"';
             case 'array':
                 $indexed = array_keys($var) === range(0, count($var) - 1);
                 $r = [];
                 foreach ($var as $key => $value) {
                     $r[] = "$indent    "
-                        .($indexed ? '' : self::varExport($key).' => ')
-                        .self::varExport($value, "$indent    ");
+                        . ($indexed ? '' : self::varExport($key) . ' => ')
+                        . self::varExport($value, "$indent    ");
                 }
 
-                return "[\n".implode(",\n", $r)."\n".$indent.']';
+                return "[\n" . implode(",\n", $r) . "\n" . $indent . ']';
             case 'boolean':
                 return $var ? 'true' : 'false';
             default:
@@ -35,6 +35,22 @@ class Util
         return $values->map(function ($values) use ($keys) {
             return array_combine($keys, $values);
         });
+    }
+    public static function array_depth(array $array)
+    {
+        $max_depth = 1;
+
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                $depth = Util::array_depth($value) + 1;
+
+                if ($depth > $max_depth) {
+                    $max_depth = $depth;
+                }
+            }
+        }
+
+        return $max_depth;
     }
 
     public static function asArray($value)
