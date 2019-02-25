@@ -68,7 +68,7 @@ class Writer
     }
 
     protected function groupTranslationCollectionFilter($collection)
-    {
+    {;
         $collection_result = new Collection();
 
         foreach ($collection as $language_file => $entries) {
@@ -78,6 +78,7 @@ class Writer
             foreach ($entries as $entry_key => $entry) {
 
                 if (is_array($entry)) {
+
                     /* level 1 */
                     foreach ($entry as $entry_d1_k => $entry_d1_v) {
 
@@ -87,19 +88,15 @@ class Writer
                                 if (is_array($entry_d2_v)) {
                                     /* level 3 */
                                     foreach ($entry_d2_v as $entry_d3_k => $entry_d3_v) {
-
                                         if (is_array($entry_d3_v)) { } else {
-
                                             $new_language_file[$entry_key . "." . $entry_d1_k . "." . $entry_d2_k . "." . $entry_d3_k] = $entry_d3_v;
                                         }
                                     }
                                     /* end level 3 */
                                 } else {
-
                                     $new_language_file[$entry_key . "." . $entry_d1_k . "." . $entry_d2_k] = $entry_d2_v;
                                 }
                             }
-
                             /* end level 2 */
                         } else {
 
@@ -113,12 +110,13 @@ class Writer
             }
             $collection_result[$language_file] = $new_language_file;
         }
-        // \Log::info($collection_result->toJson());
+
         return $collection_result;
     }
 
     protected function groupTranslationsByFile()
     {
+        // \Log::info($this->translations);
         $items = $this
             ->translations
             ->groupBy('sourceFile')
@@ -128,18 +126,21 @@ class Writer
 
         // flatten does not seem to work for every case. !!! refactor !!!
         $result = [];
+        // \Log::info($items);
         foreach ($items as $subitems) {
 
             $result = array_merge($result, $subitems);
         }
         $collection_result = new Collection($result);
-
+        // \Log::info(Writer::groupTranslationCollectionFilter($collection_result));
         return Writer::groupTranslationCollectionFilter($collection_result);
+        // return new Collection($result);
     }
 
     protected function buildTranslationsForFile($fileTranslations)
     {
-        $files = [];
+
+        $l_files = [];
         $locales = $this->spreadsheet->getLocales();
 
         foreach ($locales as $locale) {
@@ -154,14 +155,14 @@ class Writer
                 }
 
                 $localeFile = str_replace('{locale}/', $locale . '/', $translation['sourceFile']);
-                if (empty($files[$localeFile])) {
-                    $files[$localeFile] = [];
+                if (empty($l_files[$localeFile])) {
+                    $l_files[$localeFile] = [];
                 }
-
-                Arr::set($files[$localeFile], $translation['key'], $translation[$locale]);
+                $l_files[$localeFile][$translation['key']] = $translation[$locale];
+                // Arr::set( $l_files[$localeFile], $translation['key'], $translation[$locale]);
             }
         }
-
-        return $files;
+        // \Log::info( $files);
+        return $l_files;
     }
 }

@@ -3,8 +3,8 @@
 namespace Nikaia\TranslationSheet;
 
 use Nikaia\TranslationSheet\Commands\Output;
-use Nikaia\TranslationSheet\Translation\Writer;
 use Nikaia\TranslationSheet\Sheet\TranslationsSheet;
+use Nikaia\TranslationSheet\Translation\Writer;
 
 class Puller
 {
@@ -28,7 +28,6 @@ class Puller
     {
         $this->output->writeln('<comment>Pulling translation from Spreadsheet</comment>');
         $translations = $this->getTranslations();
-
         $this->output->writeln('<comment>Writing languages files :</comment>');
         $this->writer
             ->withOutput($this->output)
@@ -41,9 +40,7 @@ class Puller
     public function getTranslations()
     {
         $header = $this->translationsSheet->getSpreadsheet()->getCamelizedHeader();
-
         $translations = $this->translationsSheet->readTranslations();
-
         return Util::keyValues($translations, $header);
     }
 }
